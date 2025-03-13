@@ -10,14 +10,19 @@ const {
   stopVM,
   startContainer,
   stopContainer,
-  getNodeStats
+  getNodeStats,
+  testConnection
 } = require('../controllers/proxmox.controller');
-const { authorizeRoles } = require('../middleware/auth.middleware');
+const { authMiddleware, authorizeRoles } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
+// Apply auth middleware to all routes
+router.use(authMiddleware);
+
 // Cluster routes
 router.get('/clusters', getClusters);
+router.get('/clusters/:clusterId/test', testConnection);
 router.get('/clusters/:clusterId/nodes', getNodes);
 
 // VM routes
