@@ -1,9 +1,9 @@
-const proxmox = require('proxmox-api');
+const proxmoxApi = require('proxmox-api').default;
 const { ApiError } = require('../middleware/error.middleware');
 
 /**
  * ProxmoxService class to handle interactions with Proxmox API
- * Uses proxmox-api library version 0.3.0 for compatibility
+ * Uses proxmox-api library version 1.1.1
  */
 class ProxmoxService {
   constructor() {
@@ -51,7 +51,7 @@ class ProxmoxService {
     this.clusters.forEach(cluster => {
       try {
         // Use proxmoxApi for the API client factory (updated for proxmox-api v1.1.1)
-        this.connections[cluster.id] = proxmox({
+        this.connections[cluster.id] = proxmoxApi({
           host: cluster.host.replace(/^https?:\/\//, ''), // Remove protocol if present
           tokenID: `${cluster.user}!${cluster.tokenName}`,
           tokenSecret: cluster.tokenValue,
