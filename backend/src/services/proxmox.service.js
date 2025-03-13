@@ -3,6 +3,7 @@ const { ApiError } = require('../middleware/error.middleware');
 
 /**
  * ProxmoxService class to handle interactions with Proxmox API
+ * Uses proxmox-api library version 0.3.0 for compatibility
  */
 class ProxmoxService {
   constructor() {
@@ -13,6 +14,7 @@ class ProxmoxService {
 
   /**
    * Load cluster configurations from environment variables
+   * Looks for PROXMOX_CLUSTER_n_* environment variables
    */
   loadClusters() {
     const clusters = [];
@@ -43,11 +45,12 @@ class ProxmoxService {
 
   /**
    * Initialize connections to all configured clusters
+   * Creates API clients for each Proxmox cluster
    */
   initializeConnections() {
     this.clusters.forEach(cluster => {
       try {
-        // Updated to use the correct API based on proxmox-api documentation
+        // Use proxmox.default for the API client factory
         this.connections[cluster.id] = proxmox.default({
           host: cluster.host.replace(/^https?:\/\//, ''), // Remove protocol if present
           tokenID: `${cluster.user}!${cluster.tokenName}`,
