@@ -1,19 +1,21 @@
 <script lang="ts">
+  import { api } from '$lib/api';
   import Icon from '@iconify/svelte';
+  import { toast } from '@zerodevx/svelte-toast';
+  import { onMount } from 'svelte';
+ // Import API client
 
   // Tab management
   const tabs = [
-    { id: 'general', label: 'General', icon: 'mdi:cog' },
-    { id: 'proxmox', label: 'Proxmox API', icon: 'mdi:api' },
-    { id: 'notifications', label: 'Notifications', icon: 'mdi:bell' },
-    { id: 'users', label: 'Users', icon: 'mdi:account-multiple' },
-    { id: 'appearance', label: 'Appearance', icon: 'mdi:palette' },
-    { id: 'backups', label: 'Backups', icon: 'mdi:backup-restore' }
+    { id: 'general', label: 'General', icon: 'mdi:cog-outline' },
+    { id: 'proxmox', label: 'Proxmox API', icon: 'mdi:server' },
+    { id: 'notifications', label: 'Notifications', icon: 'mdi:bell-outline' },
+    { id: 'security', label: 'Security', icon: 'mdi:security' },
   ];
 
-  let activeTab = 'general';
+  let activeTab = 'proxmox';
 
-  // Mock form data - this would be loaded from API in real application
+  // Initial form data (will be overridden when loading from API)
   let formData = {
     general: {
       appName: 'ProxMonX',
@@ -23,16 +25,7 @@
       dateFormat: 'YYYY-MM-DD'
     },
     proxmox: {
-      clusters: [
-        {
-          id: 1,
-          name: 'Main Cluster',
-          url: 'https://192.168.10.1:8006',
-          username: 'monitoring@pam',
-          apiToken: '********',
-          verifySSL: false
-        }
-      ]
+      clusters: []
     },
     notifications: {
       email: {
@@ -61,38 +54,119 @@
     }
   };
 
-  // Form submission handler (placeholder)
-  function handleSubmit() {
-    console.log('Saving settings:', formData);
-    // In a real app, this would call the API
-    alert('Settings saved successfully (simulated)');
+  let loading = true;
+  let saving = false;
+  let error = null;
+
+  // Load settings on component mount
+  onMount(async () => {
+    try {
+      const response = await api.get('/settings');
+      if (response.data && response.data.status === 'success') {
+        // Update Proxmox clusters from API
+        if (response.data.data.proxmox && response.data.data.proxmox.clusters) {
+          formData.proxmox.clusters = response.data.data.proxmox.clusters;
+        }
+        // In a real app, you would also load other settings sections
+      }
+    } catch (err) {
+      console.error('Failed to load settings:', err);
+      error = 'Failed to load settings. Please try refreshing the page.';
+    } finally {
+      loading = false;
+    }
+  });
+
+  // Form submission handler
+  async function handleSubmit() {
+    saving = true;
+    error = null;
+
+    try {
+      const response = await api.put('/settings/proxmox', {
+        clusters: formData.proxmox.clusters
+      });
+
+      if (response.data && response.data.status === 'success') {
+        toast.push({
+          title: 'Success',
+          message: 'Settings saved successfully',
+          theme: {
+            '--toastBackground': '#48BB78',
+            '--toastBarBackground': '#2F855A'
+          }
+        });
+      } else {
+        throw new Error('Unexpected response format');
+      }
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+      error = 'Failed to save settings. Please try again.';
+      toast.push({
+        title: 'Error',
+        message: 'Failed to save settings',
+        theme: {
+          '--toastBackground': '#F56565',
+          '--toastBarBackground': '#C53030'
+        }
+      });
+    } finally {
+      saving = false;
+    }
   }
 
-  // Add cluster handler (placeholder)
+  // Add cluster handler
   function addCluster() {
     formData.proxmox.clusters = [
       ...formData.proxmox.clusters,
       {
         id: formData.proxmox.clusters.length + 1,
         name: 'New Cluster',
-        url: '',
+        url: 'https://',
         username: '',
         apiToken: '',
-        verifySSL: true
+        verifySSL: false
       }
     ];
   }
 
   // Remove cluster handler
-  function removeCluster(index: number) {
+  function removeCluster(index) {
     formData.proxmox.clusters = formData.proxmox.clusters.filter((_, i) => i !== index);
   }
 
-  // Test connection handler (placeholder)
-  function testConnection(cluster: any) {
-    console.log('Testing connection to:', cluster);
-    // In a real app, this would call the API
-    alert(`Connection to ${cluster.name} successful (simulated)`);
+  // Test connection handler
+  async function testConnection(cluster) {
+    try {
+      // Find the cluster ID that matches this cluster
+      const clusterId = cluster.id;
+
+      // Test the connection using the API
+      const response = await api.get(`/proxmox/clusters/${clusterId}/test`);
+
+      if (response.data && response.data.status === 'success') {
+        toast.push({
+          title: 'Success',
+          message: `Connection to ${cluster.name} successful`,
+          theme: {
+            '--toastBackground': '#48BB78',
+            '--toastBarBackground': '#2F855A'
+          }
+        });
+      } else {
+        throw new Error('Connection test failed');
+      }
+    } catch (err) {
+      console.error('Connection test failed:', err);
+      toast.push({
+        title: 'Error',
+        message: `Failed to connect to ${cluster.name}: ${err.response?.data?.message || 'Unknown error'}`,
+        theme: {
+          '--toastBackground': '#F56565',
+          '--toastBarBackground': '#C53030'
+        }
+      });
+    }
   }
 </script>
 
@@ -488,7 +562,7 @@
       {/if}
 
       <!-- Placeholder for other tabs -->
-      {#if activeTab === 'users' || activeTab === 'appearance' || activeTab === 'backups'}
+      {#if activeTab === 'security'}
         <div class="text-center py-8">
           <div class="inline-flex rounded-full bg-indigo-100 p-4 mb-4">
             <Icon icon="mdi:construction" class="h-8 w-8 text-indigo-600" />

@@ -289,6 +289,17 @@ class ProxmoxService {
     // Handle other errors
     throw new ApiError(500, 'Failed to communicate with Proxmox API');
   }
+
+  /**
+   * Reload clusters configuration and reinitialize connections
+   */
+  reload() {
+    console.log('Reloading Proxmox cluster configurations');
+    this.clusters = this.loadClusters();
+    this.connections = {};
+    this.initializeConnections();
+    return this.getClusters();
+  }
 }
 
 // Create and export a singleton instance

@@ -11,6 +11,7 @@ const userRoutes = require('./routes/user.routes');
 const proxmoxRoutes = require('./routes/proxmox.routes');
 const metricsRoutes = require('./routes/metrics.routes');
 const notificationRoutes = require('./routes/notification.routes');
+const settingsRoutes = require('./routes/settings.routes');
 
 // Import middleware
 const { errorHandler } = require('./middleware/error.middleware');
@@ -57,6 +58,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/proxmox', proxmoxRoutes);
 app.use('/api/metrics', metricsRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
