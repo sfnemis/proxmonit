@@ -1,5 +1,6 @@
 const proxmoxApi = require('proxmox-api').default;
 const { ApiError } = require('../middleware/error.middleware');
+const proxmoxConfig = require('../config/proxmox.config');
 
 /**
  * ProxmoxService class to handle interactions with Proxmox API
@@ -13,29 +14,13 @@ class ProxmoxService {
   }
 
   /**
-   * Load cluster configurations from environment variables
-   * Looks for PROXMOX_CLUSTER_n_* environment variables
+   * Load cluster configurations from config file
    */
   loadClusters() {
-    const clusters = [];
-    let i = 1;
-
-    // Look for cluster configurations in environment variables
-    while (process.env[`PROXMOX_CLUSTER_${i}_NAME`]) {
-      clusters.push({
-        id: i,
-        name: process.env[`PROXMOX_CLUSTER_${i}_NAME`],
-        host: process.env[`PROXMOX_CLUSTER_${i}_HOST`],
-        user: process.env[`PROXMOX_CLUSTER_${i}_USER`],
-        tokenName: process.env[`PROXMOX_CLUSTER_${i}_TOKEN_NAME`],
-        tokenValue: process.env[`PROXMOX_CLUSTER_${i}_TOKEN_VALUE`],
-        verifySSL: process.env[`PROXMOX_CLUSTER_${i}_VERIFY_SSL`] === 'true'
-      });
-      i++;
-    }
+    const clusters = proxmoxConfig.clusters;
 
     if (clusters.length === 0) {
-      console.warn('No Proxmox clusters configured in environment variables');
+      console.warn('No Proxmox clusters configured');
     } else {
       console.log(`Loaded ${clusters.length} Proxmox cluster configurations`);
     }
