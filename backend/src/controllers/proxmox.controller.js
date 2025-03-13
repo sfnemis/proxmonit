@@ -328,7 +328,12 @@ const testConnection = async (req, res, next) => {
       });
     } catch (error) {
       // Check if it's a network error
-      if (error.message && (error.message.includes('EHOSTUNREACH') || error.message.includes('ECONNREFUSED'))) {
+      if (error.message && (
+        error.message.includes('EHOSTUNREACH') ||
+        error.message.includes('ECONNREFUSED') ||
+        error.message.includes('FaILED to call') ||
+        error.message.includes('connect EHOSTUNREACH')
+      )) {
         return res.status(503).json({
           status: 'error',
           message: 'Cannot connect to Proxmox server. Please check if the server is running and accessible.',
