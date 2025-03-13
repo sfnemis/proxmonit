@@ -301,6 +301,30 @@ const getNodeStats = async (req, res, next) => {
   }
 };
 
+/**
+ * Test connection to a specific Proxmox cluster
+ * @route GET /api/proxmox/clusters/:clusterId/test
+ */
+const testConnection = async (req, res, next) => {
+  try {
+    const { clusterId } = req.params;
+
+    if (!clusterId) {
+      throw new ApiError(400, 'Cluster ID is required');
+    }
+
+    const result = await proxmoxService.testConnection(parseInt(clusterId, 10));
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Connection successful',
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getClusters,
   getNodes,
@@ -312,5 +336,6 @@ module.exports = {
   stopVM,
   startContainer,
   stopContainer,
-  getNodeStats
+  getNodeStats,
+  testConnection
 };
