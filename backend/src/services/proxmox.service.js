@@ -286,17 +286,22 @@ class ProxmoxService {
   /**
    * Handle API errors
    * @param {Error} error - Error object
+   * @throws {ApiError} - API error
    */
   handleApiError(error) {
     console.error('Proxmox API Error:', error);
 
-    if (error.response) {
-      throw new ApiError(
-        error.response.status || 500,
-        error.response.data?.message || 'Proxmox API error'
-      );
+    // Check for network errors
+    if (error.message && (
+      error.message.includes('EHOSTUNREACH') ||
+      error.message.includes('ECONNREFUSED') ||
+      error.message.includes('FaILED to call') ||
+      error.message.includes('connect EHOSTUNREACH')
+    )) {
+      throw new ApiError(503, 'Cannot connect to Proxmox server. Please check if the server is running and accessible.');
     }
 
+    // Handle other errors
     throw new ApiError(500, 'Failed to communicate with Proxmox API');
   }
 }
