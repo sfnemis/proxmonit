@@ -50,12 +50,12 @@ class ProxmoxService {
   initializeConnections() {
     this.clusters.forEach(cluster => {
       try {
-        // Use proxmox.default for the API client factory
-        this.connections[cluster.id] = proxmox.default({
+        // Use proxmoxApi for the API client factory (updated for proxmox-api v1.1.1)
+        this.connections[cluster.id] = proxmox({
           host: cluster.host.replace(/^https?:\/\//, ''), // Remove protocol if present
           tokenID: `${cluster.user}!${cluster.tokenName}`,
           tokenSecret: cluster.tokenValue,
-          insecure: true // Disable TLS verification for testing
+          insecure: !cluster.verifySSL // Disable TLS verification if verifySSL is false
         });
 
         console.log(`Initialized connection to Proxmox cluster: ${cluster.name}`);
@@ -102,8 +102,8 @@ class ProxmoxService {
   async getNodes(clusterId) {
     try {
       const connection = this.getConnection(clusterId);
-      const response = await connection.get('/nodes');
-      return response.data;
+      const response = await connection.nodes.$get();
+      return response;
     } catch (error) {
       this.handleApiError(error);
     }
@@ -118,8 +118,8 @@ class ProxmoxService {
   async getVMs(clusterId, node) {
     try {
       const connection = this.getConnection(clusterId);
-      const response = await connection.get(`/nodes/${node}/qemu`);
-      return response.data;
+      const response = await connection.nodes.$(node).qemu.$get();
+      return response;
     } catch (error) {
       this.handleApiError(error);
     }
@@ -134,8 +134,8 @@ class ProxmoxService {
   async getContainers(clusterId, node) {
     try {
       const connection = this.getConnection(clusterId);
-      const response = await connection.get(`/nodes/${node}/lxc`);
-      return response.data;
+      const response = await connection.nodes.$(node).lxc.$get();
+      return response;
     } catch (error) {
       this.handleApiError(error);
     }
@@ -151,8 +151,8 @@ class ProxmoxService {
   async getVMStatus(clusterId, node, vmid) {
     try {
       const connection = this.getConnection(clusterId);
-      const response = await connection.get(`/nodes/${node}/qemu/${vmid}/status/current`);
-      return response.data;
+      const response = await connection.nodes.$(node).qemu.$(vmid).status.current.$get();
+      return response;
     } catch (error) {
       this.handleApiError(error);
     }
@@ -168,8 +168,8 @@ class ProxmoxService {
   async getContainerStatus(clusterId, node, vmid) {
     try {
       const connection = this.getConnection(clusterId);
-      const response = await connection.get(`/nodes/${node}/lxc/${vmid}/status/current`);
-      return response.data;
+      const response = await connection.nodes.$(node).lxc.$(vmid).status.current.$get();
+      return response;
     } catch (error) {
       this.handleApiError(error);
     }
@@ -185,8 +185,8 @@ class ProxmoxService {
   async startVM(clusterId, node, vmid) {
     try {
       const connection = this.getConnection(clusterId);
-      const response = await connection.post(`/nodes/${node}/qemu/${vmid}/status/start`);
-      return response.data;
+      const response = await connection.nodes.$(node).qemu.$(vmid).status.start.$post();
+      return response;
     } catch (error) {
       this.handleApiError(error);
     }
@@ -202,8 +202,8 @@ class ProxmoxService {
   async stopVM(clusterId, node, vmid) {
     try {
       const connection = this.getConnection(clusterId);
-      const response = await connection.post(`/nodes/${node}/qemu/${vmid}/status/stop`);
-      return response.data;
+      const response = await connection.nodes.$(node).qemu.$(vmid).status.stop.$post();
+      return response;
     } catch (error) {
       this.handleApiError(error);
     }
@@ -219,8 +219,8 @@ class ProxmoxService {
   async startContainer(clusterId, node, vmid) {
     try {
       const connection = this.getConnection(clusterId);
-      const response = await connection.post(`/nodes/${node}/lxc/${vmid}/status/start`);
-      return response.data;
+      const response = await connection.nodes.$(node).lxc.$(vmid).status.start.$post();
+      return response;
     } catch (error) {
       this.handleApiError(error);
     }
@@ -236,8 +236,8 @@ class ProxmoxService {
   async stopContainer(clusterId, node, vmid) {
     try {
       const connection = this.getConnection(clusterId);
-      const response = await connection.post(`/nodes/${node}/lxc/${vmid}/status/stop`);
-      return response.data;
+      const response = await connection.nodes.$(node).lxc.$(vmid).status.stop.$post();
+      return response;
     } catch (error) {
       this.handleApiError(error);
     }
@@ -252,8 +252,8 @@ class ProxmoxService {
   async getNodeStats(clusterId, node) {
     try {
       const connection = this.getConnection(clusterId);
-      const response = await connection.get(`/nodes/${node}/status`);
-      return response.data;
+      const response = await connection.nodes.$(node).status.$get();
+      return response;
     } catch (error) {
       this.handleApiError(error);
     }
@@ -269,13 +269,13 @@ class ProxmoxService {
       console.log(`Testing connection to Proxmox cluster ID: ${clusterId}`);
       const connection = this.getConnection(clusterId);
 
-      // A simple API call to test the connection
-      const version = await connection.get('/version');
-      console.log(`Connection successful. Proxmox version: ${JSON.stringify(version.data)}`);
+      // A simple API call to test the connection (updated for proxmox-api v1.1.1)
+      const version = await connection.version.$get();
+      console.log(`Connection successful. Proxmox version: ${JSON.stringify(version)}`);
 
       return {
         success: true,
-        version: version.data
+        version: version
       };
     } catch (error) {
       console.error(`Connection test failed for cluster ID ${clusterId}:`, error);
