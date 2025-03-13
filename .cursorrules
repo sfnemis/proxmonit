@@ -102,6 +102,7 @@ If needed, you can further use the `web_scraper.py` file to scrape the web page 
 - When using seaborn styles in matplotlib, use 'seaborn-v0_8' instead of 'seaborn' as the style name due to recent seaborn version changes
 - Use 'gpt-4o' as the model name for OpenAI's GPT-4 with vision capabilities
 - When using Svelte with two-way binding, avoid using dynamic type attributes on input elements as it causes linter errors
+- Svelte 5 has compatibility issues with some libraries that expect Svelte 4, such as svelte-chartjs
 
 # Scratchpad
 
@@ -130,14 +131,15 @@ ProxMonX is a comprehensive monitoring tool for Proxmox environments with these 
 ## Development Plan
 
 ### Phase 1: Frontend Development
-[ ] Set up Svelte with TailwindCSS project
-[ ] Create responsive layout and navigation
-[ ] Develop dashboard components
-[ ] Implement charts and visualization components
-[ ] Create settings and configuration pages
+[X] Set up Svelte with TailwindCSS project
+[X] Create responsive layout and navigation
+[X] Develop dashboard components
+[X] Create pages for Virtual Machines
+[X] Create pages for Containers
+[X] Create settings and configuration pages
 [ ] Develop user management interface
 [ ] Create notification settings UI
-[ ] Implement mobile responsive design
+[ ] Implement charts with real data
 
 ### Phase 2: Backend Development
 [ ] Set up Node.js project structure
