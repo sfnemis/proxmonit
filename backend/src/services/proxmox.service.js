@@ -53,8 +53,8 @@ class ProxmoxService {
         // Use proxmoxApi for the API client factory (updated for proxmox-api v1.1.1)
         this.connections[cluster.id] = proxmoxApi({
           host: cluster.host.replace(/^https?:\/\//, ''), // Remove protocol if present
-          tokenID: `${cluster.user}!${cluster.tokenName}`,
-          tokenSecret: cluster.tokenValue,
+          username: cluster.user,
+          password: cluster.tokenValue,
           insecure: !cluster.verifySSL // Disable TLS verification if verifySSL is false
         });
 
