@@ -302,24 +302,43 @@ const getNodeStats = async (req, res, next) => {
 };
 
 /**
- * Test connection to a specific Proxmox cluster
+ * Test connection to a Proxmox cluster
  * @route GET /api/proxmox/clusters/:clusterId/test
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ * @returns {Object} - Connection test result
  */
 const testConnection = async (req, res, next) => {
   try {
     const { clusterId } = req.params;
 
     if (!clusterId) {
-      throw new ApiError(400, 'Cluster ID is required');
+      return res.status(400).json({
+        status: 'error',
+        message: 'Cluster ID is required'
+      });
     }
 
-    const result = await proxmoxService.testConnection(parseInt(clusterId, 10));
+    try {
+      const result = await proxmoxService.testConnection(clusterId);
+      return res.status(200).json({
+        status: 'success',
+        data: result
+      });
+    } catch (error) {
+      // Check if it's a network error
+      if (error.message && (error.message.includes('EHOSTUNREACH') || error.message.includes('ECONNREFUSED'))) {
+        return res.status(503).json({
+          status: 'error',
+          message: 'Cannot connect to Proxmox server. Please check if the server is running and accessible.',
+          details: error.message
+        });
+      }
 
-    res.status(200).json({
-      status: 'success',
-      message: 'Connection successful',
-      data: result
-    });
+      // For other errors, pass to the error handler
+      throw error;
+    }
   } catch (error) {
     next(error);
   }
