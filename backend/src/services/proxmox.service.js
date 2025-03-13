@@ -47,11 +47,12 @@ class ProxmoxService {
   initializeConnections() {
     this.clusters.forEach(cluster => {
       try {
-        this.connections[cluster.id] = proxmox.create({
-          host: cluster.host,
+        // Updated to use the correct API based on proxmox-api documentation
+        this.connections[cluster.id] = proxmox.default({
+          host: cluster.host.replace(/^https?:\/\//, ''), // Remove protocol if present
           tokenID: `${cluster.user}!${cluster.tokenName}`,
           tokenSecret: cluster.tokenValue,
-          verifySSL: cluster.verifySSL
+          insecure: true // Disable TLS verification for testing
         });
 
         console.log(`Initialized connection to Proxmox cluster: ${cluster.name}`);
@@ -99,7 +100,6 @@ class ProxmoxService {
     try {
       const connection = this.getConnection(clusterId);
       const response = await connection.get('/nodes');
-
       return response.data;
     } catch (error) {
       this.handleApiError(error);
@@ -116,7 +116,6 @@ class ProxmoxService {
     try {
       const connection = this.getConnection(clusterId);
       const response = await connection.get(`/nodes/${node}/qemu`);
-
       return response.data;
     } catch (error) {
       this.handleApiError(error);
@@ -133,7 +132,6 @@ class ProxmoxService {
     try {
       const connection = this.getConnection(clusterId);
       const response = await connection.get(`/nodes/${node}/lxc`);
-
       return response.data;
     } catch (error) {
       this.handleApiError(error);
@@ -151,7 +149,6 @@ class ProxmoxService {
     try {
       const connection = this.getConnection(clusterId);
       const response = await connection.get(`/nodes/${node}/qemu/${vmid}/status/current`);
-
       return response.data;
     } catch (error) {
       this.handleApiError(error);
@@ -169,7 +166,6 @@ class ProxmoxService {
     try {
       const connection = this.getConnection(clusterId);
       const response = await connection.get(`/nodes/${node}/lxc/${vmid}/status/current`);
-
       return response.data;
     } catch (error) {
       this.handleApiError(error);
@@ -187,7 +183,6 @@ class ProxmoxService {
     try {
       const connection = this.getConnection(clusterId);
       const response = await connection.post(`/nodes/${node}/qemu/${vmid}/status/start`);
-
       return response.data;
     } catch (error) {
       this.handleApiError(error);
@@ -205,7 +200,6 @@ class ProxmoxService {
     try {
       const connection = this.getConnection(clusterId);
       const response = await connection.post(`/nodes/${node}/qemu/${vmid}/status/stop`);
-
       return response.data;
     } catch (error) {
       this.handleApiError(error);
@@ -223,7 +217,6 @@ class ProxmoxService {
     try {
       const connection = this.getConnection(clusterId);
       const response = await connection.post(`/nodes/${node}/lxc/${vmid}/status/start`);
-
       return response.data;
     } catch (error) {
       this.handleApiError(error);
@@ -241,7 +234,6 @@ class ProxmoxService {
     try {
       const connection = this.getConnection(clusterId);
       const response = await connection.post(`/nodes/${node}/lxc/${vmid}/status/stop`);
-
       return response.data;
     } catch (error) {
       this.handleApiError(error);
@@ -258,9 +250,32 @@ class ProxmoxService {
     try {
       const connection = this.getConnection(clusterId);
       const response = await connection.get(`/nodes/${node}/status`);
-
       return response.data;
     } catch (error) {
+      this.handleApiError(error);
+    }
+  }
+
+  /**
+   * Test connection to a specific cluster
+   * @param {Number} clusterId - Cluster ID
+   * @returns {Promise<Object>} Connection test result
+   */
+  async testConnection(clusterId) {
+    try {
+      console.log(`Testing connection to Proxmox cluster ID: ${clusterId}`);
+      const connection = this.getConnection(clusterId);
+
+      // A simple API call to test the connection
+      const version = await connection.get('/version');
+      console.log(`Connection successful. Proxmox version: ${JSON.stringify(version.data)}`);
+
+      return {
+        success: true,
+        version: version.data
+      };
+    } catch (error) {
+      console.error(`Connection test failed for cluster ID ${clusterId}:`, error);
       this.handleApiError(error);
     }
   }
